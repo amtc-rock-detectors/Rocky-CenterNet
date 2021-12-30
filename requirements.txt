@@ -2,6 +2,8 @@ opencv-python
 Cython
 numba
 progress
+labelme
 matplotlib
 easydict
 scipy
+xmltodict

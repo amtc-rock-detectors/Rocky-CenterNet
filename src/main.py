@@ -95,6 +95,10 @@ def main(opt):
       print('Drop LR to', lr)
       for param_group in optimizer.param_groups:
           param_group['lr'] = lr
+    else:
+      if epoch % 10 == 0:
+        save_model(os.path.join(opt.save_dir, 'model_{}.pth'.format(epoch)), 
+                   epoch, model, optimizer)
   logger.close()
 
 if __name__ == '__main__':

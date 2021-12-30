@@ -169,6 +169,127 @@ def soft_nms(np.ndarray[float, ndim=2] boxes, float sigma=0.5, float Nt=0.3, flo
     keep = [i for i in range(N)]
     return keep
 
+def soft_nms_ellipse(np.ndarray[float, ndim=2] boxes, float sigma=0.5, float Nt=0.3, float threshold=0.001, unsigned int method=0):
+    cdef unsigned int N = boxes.shape[0]
+    cdef float iw, ih, box_area
+    cdef float ua
+    cdef int pos = 0
+    cdef float maxscore = 0
+    cdef int maxpos = 0
+    cdef float x1,x2,y1,y2,ang,tx1,tx2,ty1,ty2,tang,ts,area,weight,ov
+
+    for i in range(N):
+        maxscore = boxes[i, 5]
+        maxpos = i
+
+        txc = boxes[i,0]
+        tyc = boxes[i,1]
+        ta = boxes[i,2]
+        tb = boxes[i,3]
+        tang = boxes[i,4]
+        ts = boxes[i,5]
+
+        pos = i + 1
+        # get max box
+        while pos < N:
+            if maxscore < boxes[pos, 5]:
+                maxscore = boxes[pos, 5]
+                maxpos = pos
+            pos = pos + 1
+
+        # add max box as a detection
+        boxes[i,0] = boxes[maxpos,0]
+        boxes[i,1] = boxes[maxpos,1]
+        boxes[i,2] = boxes[maxpos,2]
+        boxes[i,3] = boxes[maxpos,3]
+        boxes[i,4] = boxes[maxpos,4]
+        boxes[i,5] = boxes[maxpos,5]
+
+        # swap ith box with position of max box
+        boxes[maxpos,0] = txc
+        boxes[maxpos,1] = tyc
+        boxes[maxpos,2] = ta
+        boxes[maxpos,3] = tb
+        boxes[maxpos,4] = tang
+        boxes[maxpos,5] = ts
+
+        txc = boxes[i,0]
+        tyc = boxes[i,1]
+        ta = boxes[i,2]
+        tb = boxes[i,3]
+        tang = boxes[i,4]
+        ts = boxes[i,5]
+        
+        tcos_2 = np.cos(tang * np.pi) ** 2
+        tsin_2 = 1 - tcos_2
+        tw = np.sqrt(ta ** 2 * tcos_2 + tb ** 2 * tsin_2)
+        th = np.sqrt(tb ** 2 * tcos_2 + ta ** 2 * tsin_2)
+        
+        tx1 = txc - tw / 2
+        ty1 = tyc - th / 2
+        tx2 = txc + tw / 2
+        ty2 = tyc + th / 2
+
+        pos = i + 1
+        # NMS iterations, note that N changes if detection boxes fall below threshold
+        while pos < N:
+            xc = boxes[pos, 0]
+            yc = boxes[pos, 1]
+            a = boxes[pos, 2]
+            b = boxes[pos, 3]
+            ang = boxes[pos, 4]
+            s = boxes[pos, 5]
+            
+            cos_2 = np.cos(ang * np.pi) ** 2
+            sin_2 = 1 - cos_2
+            w = np.sqrt(a ** 2 * cos_2 + b ** 2 * sin_2)
+            h = np.sqrt(b ** 2 * cos_2 + a ** 2 * sin_2)
+            
+            x1 = xc - w / 2
+            y1 = yc - h / 2
+            x2 = xc + w / 2
+            y2 = yc + h / 2
+
+            area = (x2 - x1 + 1) * (y2 - y1 + 1)
+            iw = (min(tx2, x2) - max(tx1, x1) + 1)
+            if iw > 0:
+                ih = (min(ty2, y2) - max(ty1, y1) + 1)
+                if ih > 0:
+                    ua = float((tx2 - tx1 + 1) * (ty2 - ty1 + 1) + area - iw * ih)
+                    ov = iw * ih / ua #iou between max box and detection box
+
+                    if method == 1: # linear
+                        if ov > Nt:
+                            weight = 1 - ov
+                        else:
+                            weight = 1
+                    elif method == 2: # gaussian
+                        weight = np.exp(-(ov * ov)/sigma)
+                    else: # original NMS
+                        if ov > Nt:
+                            weight = 0
+                        else:
+                            weight = 1
+
+                    boxes[pos, 5] = weight*boxes[pos, 5]
+
+                    # if box score falls below threshold, discard the box by swapping with last box
+                    # update N
+                    if boxes[pos, 5] < threshold:
+                        boxes[pos,0] = boxes[N-1, 0]
+                        boxes[pos,1] = boxes[N-1, 1]
+                        boxes[pos,2] = boxes[N-1, 2]
+                        boxes[pos,3] = boxes[N-1, 3]
+                        boxes[pos,4] = boxes[N-1, 4]
+                        boxes[pos,5] = boxes[N-1, 5]
+                        N = N - 1
+                        pos = pos - 1
+
+            pos = pos + 1
+
+    keep = [i for i in range(N)]
+    return keep
+
 def soft_nms_39(np.ndarray[float, ndim=2] boxes, float sigma=0.5, float Nt=0.3, float threshold=0.001, unsigned int method=0):
     cdef unsigned int N = boxes.shape[0]
     cdef float iw, ih, box_area

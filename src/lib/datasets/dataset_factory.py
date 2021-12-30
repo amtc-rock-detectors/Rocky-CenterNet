@@ -6,25 +6,31 @@ from .sample.ddd import DddDataset
 from .sample.exdet import EXDetDataset
 from .sample.ctdet import CTDetDataset
 from .sample.multi_pose import MultiPoseDataset
+from .sample.rockdet import RockDetDataset
 
 from .dataset.coco import COCO
 from .dataset.pascal import PascalVOC
 from .dataset.kitti import KITTI
 from .dataset.coco_hp import COCOHP
+from .dataset.rock_coco_ellipse import RockCOCO as RockCOCOEllipse
+from .dataset.rock_coco_bbox import RockCOCO as RockCOCOBbox
 
 
 dataset_factory = {
   'coco': COCO,
   'pascal': PascalVOC,
   'kitti': KITTI,
-  'coco_hp': COCOHP
+  'coco_hp': COCOHP,
+  'rock_coco_ellipse': RockCOCOEllipse,
+  'rock_coco_bbox': RockCOCOBbox,
 }
 
 _sample_factory = {
   'exdet': EXDetDataset,
   'ctdet': CTDetDataset,
   'ddd': DddDataset,
-  'multi_pose': MultiPoseDataset
+  'multi_pose': MultiPoseDataset,
+  'rockdet': RockDetDataset
 }
 
 

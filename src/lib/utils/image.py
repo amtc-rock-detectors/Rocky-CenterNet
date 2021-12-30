@@ -13,14 +13,24 @@ import numpy as np
 import cv2
 import random
 
+
 def flip(img):
   return img[:, :, ::-1].copy()  
+
 
 def transform_preds(coords, center, scale, output_size):
     target_coords = np.zeros(coords.shape)
     trans = get_affine_transform(center, scale, 0, output_size, inv=1)
     for p in range(coords.shape[0]):
         target_coords[p, 0:2] = affine_transform(coords[p, 0:2], trans)
+    return target_coords
+
+
+def transform_ellipse_preds(coords, center, scale, output_size):
+    target_coords = np.zeros(coords.shape)
+    trans = get_affine_transform(center, scale, 0, output_size, inv=1)
+    for p in range(coords.shape[0]):
+        target_coords[p, 0:5] = affine_transform_ellipse(coords[p, 0:5], trans)
     return target_coords
 
 
@@ -64,6 +74,75 @@ def affine_transform(pt, t):
     new_pt = np.array([pt[0], pt[1], 1.], dtype=np.float32).T
     new_pt = np.dot(t, new_pt)
     return new_pt[:2]
+
+
+def affine_transform_ellipse(pts, tr):
+    new_pts = np.zeros(5, dtype=np.float32)
+    xc, yc, a_, b_, theta_u = pts
+    a = a_ / 2
+    b = b_ / 2
+    
+    cos_old = np.cos(theta_u * np.pi)
+    cos_2_old = cos_old ** 2
+    
+    sin_old = np.sin(theta_u * np.pi)
+    sin_2_old = 1 - cos_2_old
+    
+    a_2 = a ** 2
+    b_2 = b ** 2
+    
+    A_old = a_2 * sin_2_old + b_2 * cos_2_old
+    B_old = 2 * (b_2 - a_2) * sin_old * cos_old
+    C_old = b_2 * sin_2_old + a_2 * cos_2_old
+    D_old = -2 * A_old * xc - B_old * yc
+    E_old = -B_old * xc - 2 * C_old * yc
+    F_old = A_old * xc ** 2 + B_old * xc * yc + C_old * yc ** 2 - a_2 * b_2
+    
+    C_quad = np.array([[A_old, B_old / 2, D_old / 2], [B_old / 2, C_old, E_old / 2],
+                       [D_old / 2, E_old / 2, F_old]])
+    
+    A_af_inv = np.linalg.inv(tr[:2, :2])
+    t_af_inv = - np.dot(A_af_inv, tr[:, 2:3])
+    
+    M_inv = np.concatenate([np.concatenate([A_af_inv, t_af_inv], axis=1), 
+                            np.array([0, 0, 1]).reshape(1, -1)], axis=0)
+    
+    C_quad_new = M_inv.T @ C_quad @ M_inv
+    
+    # print(C_quad_new)
+    A = C_quad_new[0, 0]
+    B = 2 * C_quad_new[0, 1]
+    C = C_quad_new[1, 1]
+    D = 2 * C_quad_new[0, 2]
+    E = 2 * C_quad_new[1, 2]
+    F = C_quad_new[2, 2]
+    
+    a_new = - np.sqrt(2 * (A * E ** 2 + C * D ** 2 - B * D * E + (B ** 2 - 4 * A * C) * F) * \
+                      ((A + C) + np.sqrt((A - C) ** 2 + B ** 2))) / (B ** 2 - 4 * A * C)
+    b_new = - np.sqrt(2 * (A * E ** 2 + C * D ** 2 - B * D * E + (B ** 2 - 4 * A * C) * F) * \
+                      ((A + C) - np.sqrt((A - C) ** 2 + B ** 2))) / (B ** 2 - 4 * A * C)
+    x_c_new = (2 * C * D - B * E) / (B ** 2 - 4 * A * C)
+    y_c_new = (2 * A * E - B * D) / (B ** 2 - 4 * A * C)
+    
+    if B != 0:
+        theta_new = np.arctan((C - A - np.sqrt((A - C) ** 2 + B ** 2)) / B) % np.pi
+    elif A <= C:
+        theta_new = 0
+    else:
+        theta_new = np.pi / 2 
+    
+    new_pts[0] = x_c_new
+    new_pts[1] = y_c_new
+    if a_new >= b_new:
+        new_pts[2] = a_new * 2
+        new_pts[3] = b_new * 2
+        new_pts[4] = theta_new / np.pi
+    else:
+        new_pts[2] = b_new * 2
+        new_pts[3] = a_new * 2
+        new_pts[4] = (theta_new + np.pi / 2) % np.pi / np.pi
+    # print(width_new, height_new, new_pts[4] * 180.)
+    return new_pts
 
 
 def get_3rd_point(a, b):

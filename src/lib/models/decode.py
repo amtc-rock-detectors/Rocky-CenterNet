@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import numpy as np
 import torch
 import torch.nn as nn
 from .utils import _gather_feat, _transpose_and_gather_feat
@@ -493,6 +494,49 @@ def ctdet_decode(heat, wh, reg=None, cat_spec_wh=False, K=100):
     detections = torch.cat([bboxes, scores, clses], dim=2)
       
     return detections
+
+
+def rockdet_decode(heat, wh, ang, reg=None, cat_spec_wh=False, K=100, ang_anchors=0):
+    batch, cat, height, width = heat.size()
+
+    # heat = torch.sigmoid(heat)
+    # perform nms on heatmaps
+    heat = _nms(heat)
+
+    scores, inds, clses, ys, xs = _topk(heat, K=K)
+    if reg is not None:
+        reg = _transpose_and_gather_feat(reg, inds)
+        reg = reg.view(batch, K, 2)
+        xs = xs.view(batch, K, 1) + reg[:, :, 0:1]
+        ys = ys.view(batch, K, 1) + reg[:, :, 1:2]
+    else:
+        xs = xs.view(batch, K, 1) + 0.5
+        ys = ys.view(batch, K, 1) + 0.5
+    wh = _transpose_and_gather_feat(wh, inds)
+    if cat_spec_wh:
+        wh = wh.view(batch, K, cat, 2)
+        clses_ind = clses.view(batch, K, 1, 1).expand(batch, K, 1, 2).long()
+        wh = wh.gather(2, clses_ind).view(batch, K, 2)
+    else:
+        wh = wh.view(batch, K, 2)
+    ang = _transpose_and_gather_feat(ang, inds)
+    if cat_spec_wh:
+        ang = ang.view(batch, K, cat, 1)
+        clses_ind = clses.view(batch, K, 1, 1).expand(batch, K, 1, 1).long()
+        ang = ang.gather(2, clses_ind).view(batch, K, 1)
+    else:
+        ang = ang.view(batch, K, 1)
+    clses = clses.view(batch, K, 1).float()
+    scores = scores.view(batch, K, 1)
+    bboxes = torch.cat([xs,
+                        ys,
+                        wh[..., 0:1],
+                        wh[..., 1:2],
+                        ang], dim=2)
+    detections = torch.cat([bboxes, scores, clses], dim=2)
+
+    return detections
+
 
 def multi_pose_decode(
     heat, wh, kps, reg=None, hm_hp=None, hp_offset=None, K=100):
