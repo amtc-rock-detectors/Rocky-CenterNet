@@ -99,16 +99,40 @@ After [installation](readme/INSTALL.md), follow the instructions in [DATA.md](re
 Rocky-Centernet itself is released under the MIT License (refer to the LICENSE file for details), as is the base Centernet project this repository is based on. The code is heavily base on the original [CenterNet](https://github.com/xingyizhou/CenterNet) project, which itself borrows code from [human-pose-estimation.pytorch](https://github.com/Microsoft/human-pose-estimation.pytorch) (image transform, resnet), [CornerNet](https://github.com/princeton-vl/CornerNet) (hourglassnet, loss functions), [dla](https://github.com/ucbdrive/dla) (DLA network), [DCNv2](https://github.com/CharlesShang/DCNv2)(deformable convolutions), [tf-faster-rcnn](https://github.com/endernewton/tf-faster-rcnn)(Pascal VOC evaluation) and [kitti_eval](https://github.com/prclibo/kitti_eval) (KITTI dataset evaluation). Please refer to the original License of these projects (See [NOTICE](NOTICE)).
 
 
-### Citation
+## Publications
 
-If you find this project useful for your research, please use the following BibTeX entry.
+[Detecting rocks in challenging mining environments using convolutional neural networks and ellipses as an alternative to bounding boxes](https://www.sciencedirect.com/science/article/pii/S0957417422000367)
 
-    @article{loncomilla2022detecting,
-      title={Detecting Rocks in Challenging Mining Environments using Convolutional Neural Networks and Ellipses as an alternative to Bounding Boxes},
-      author={Loncomilla, Patricio and Samtani, Pavan and Ruiz-del-Solar, Javier},
-      journal={Expert Systems with Applications},
-      publisher={Elsevier},
-      year={2022}
+[Rocky-CenterNet: Detecting rocks using convolutional neural networks and ellipses](https://www.sciencedirect.com/science/article/pii/S2665963822000379)
+
+
+## Citation
+
+If you find this project useful for your research, please use the following BibTeX entries.
+
+    @article{LONCOMILLA2022116537,
+      title = {Detecting rocks in challenging mining environments using convolutional neural networks and ellipses as an alternative to bounding boxes},
+      journal = {Expert Systems with Applications},
+      volume = {194},
+      pages = {116537},
+      year = {2022},
+      issn = {0957-4174},
+      doi = {https://doi.org/10.1016/j.eswa.2022.116537},
+      url = {https://www.sciencedirect.com/science/article/pii/S0957417422000367},
+      author = {Patricio Loncomilla and Pavan Samtani and Javier Ruiz-del-Solar},
+      keywords = {Object detection, Rock detection, Convolutional neural networks, Deep learning}
+    }
+
+    @article{LONCOMILLA2022100290,
+      title = {Rocky-CenterNet: Detecting rocks using convolutional neural networks and ellipses},
+      journal = {Software Impacts},
+      pages = {100290},
+      year = {2022},
+      issn = {2665-9638},
+      doi = {https://doi.org/10.1016/j.simpa.2022.100290},
+      url = {https://www.sciencedirect.com/science/article/pii/S2665963822000379},  
+      author = {Patricio Loncomilla and Pavan Samtani and Javier Ruiz-del-Solar},
+      keywords = {Object detection, Rock detection, Convolutional neural networks, Pytorch, Deep learning}
     }
 
 ## Repository forked from: Objects as Points
