@@ -101,9 +101,9 @@ Rocky-Centernet itself is released under the MIT License (refer to the LICENSE f
 
 ## Publications
 
-[Detecting rocks in challenging mining environments using convolutional neural networks and ellipses as an alternative to bounding boxes](https://www.sciencedirect.com/science/article/pii/S0957417422000367)
+[1] [Detecting rocks in challenging mining environments using convolutional neural networks and ellipses as an alternative to bounding boxes](https://www.sciencedirect.com/science/article/pii/S0957417422000367)
 
-[Rocky-CenterNet: Detecting rocks using convolutional neural networks and ellipses](https://www.sciencedirect.com/science/article/pii/S2665963822000379)
+[2] [Rocky-CenterNet: Detecting rocks using convolutional neural networks and ellipses](https://www.sciencedirect.com/science/article/pii/S2665963822000379)
 
 
 ## Citation
